@@ -21,54 +21,75 @@
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
 
     <style>
+        /* Reseta margens e define a cor base */
         body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden;
+            margin: 0; padding: 0; height: 100%; overflow: hidden;
             background-color: #6105e8; /* Fundo Roxo */
             font-family: 'Dancing Script', cursive;
         }
 
-        /* O Iframe (o App em si) */
-        iframe {
-            display: block;
-            border: none;
-            height: 100vh;
-            width: 100vw;
-            background-color: #6105e8;
-            position: relative;
-            z-index: 1; /* Fica na frente quando carregar */
-            opacity: 0; /* Começa invisível para não mostrar tela branca */
-            transition: opacity 0.5s ease-in;
-        }
-
-        /* A Tela de Carregamento (Loading) */
+        /* --- Estilos da Tela de Carregamento --- */
         #loading-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #6105e8;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 0; /* Fica atrás do iframe */
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 10; /* Fica na frente de tudo */
+            transition: opacity 0.5s ease-out; /* Fade out suave quando terminar */
         }
 
-        /* Animação do Texto Ways pulsando */
         .pulsing-logo {
-            color: white;
-            font-size: 4rem;
-            animation: pulse 1.5s infinite ease-in-out;
+            color: white; font-size: 4rem; margin-bottom: 30px;
+            animation: pulseLogo 2s infinite ease-in-out;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-            100% { transform: scale(1); opacity: 1; }
+        /* Container do Caminhão e Barra */
+        .loading-progress-container {
+            width: 240px; /* Largura da barra */
+            text-align: center;
+        }
+
+        /* Ícone do Caminhão (SVG) */
+        .truck-icon {
+            width: 40px; height: auto; fill: white; /* Cor branca */
+            margin-bottom: 10px;
+            animation: truckBounce 0.8s infinite alternate ease-in-out;
+        }
+
+        /* O trilho da barra (fundo mais escuro) */
+        .progress-track {
+            width: 100%; height: 6px;
+            background-color: rgba(255, 255, 255, 0.2); /* Branco transparente */
+            border-radius: 10px; overflow: hidden;
+        }
+
+        /* O preenchimento da barra (branco sólido) */
+        .progress-fill {
+            height: 100%; width: 0%; background-color: white; border-radius: 10px;
+            /* Animação: cresce rápido até 80%, depois devagar até 95% em 4 segundos */
+            animation: fillProgress 4s ease-out forwards;
+        }
+
+        /* --- Animações --- */
+        @keyframes pulseLogo {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+        @keyframes truckBounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-4px); }
+        }
+        @keyframes fillProgress {
+            0% { width: 0%; }
+            70% { width: 80%; } /* Chega rápido em 80% */
+            100% { width: 95%; } /* Desacelera e para em 95% */
+        }
+
+        /* --- Estilo do Iframe do App --- */
+        iframe {
+            display: block; border: none; height: 100vh; width: 100vw;
+            background-color: #6105e8; position: relative; z-index: 1;
+            /* O iframe começa invisível, o JS vai mostrar ele quando carregar */
+            opacity: 0; transition: opacity 0.5s ease-in;
         }
     </style>
 </head>
@@ -76,37 +97,66 @@
 
     <div id="loading-screen">
         <div class="pulsing-logo">Ways</div>
+        
+        <div class="loading-progress-container">
+            <svg class="truck-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M48 0C21.5 0 0 21.5 0 48V368c0 26.5 21.5 48 48 48H64c0 53 43 96 96 96s96-43 96-96H384c0 53 43 96 96 96s96-43 96-96h32c17.7 0 32-14.3 32-32s-14.3-32-32-32V288 256 237.3c0-17-6.7-33.3-18.7-45.3L512 114.7c-12-12-28.3-18.7-45.3-18.7H416V48c0-26.5-21.5-48-48-48H48zM416 160h50.7L544 237.3V256H416V160zM112 416a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm368-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96z"/></svg>
+            
+            <div class="progress-track">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
     </div>
-
     <iframe id="app-frame" src="https://script.google.com/macros/s/AKfycbz9-TRx-SI_Z1m5bt3uZvpsNGZ3ithe8hsnu6SCcmqwUo9vBH5lQMD3Ih3Fqbp9ud3o/exec"></iframe>
 
-    <script>
-        // 1. Controle do Service Worker
+   <script>
+        // 1. Registra o Service Worker (Padrão)
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js');
         }
 
         const iframe = document.getElementById('app-frame');
+        const loadingScreen = document.getElementById('loading-screen');
         
-        // 2. Quando o iframe terminar de carregar, mostra ele suavemente
+        // Variável para controlar o tempo
+        let horaQueSaiu = Date.now(); 
+
+        // 2. Quando o Google terminar de carregar pela primeira vez:
         iframe.onload = function() {
+            // Mostra o iframe e esconde o carregamento
             iframe.style.opacity = '1';
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => { loadingScreen.style.display = 'none'; }, 500);
         };
 
-        // 3. O "Despertador": Recarrega se o app voltar do segundo plano
+        // 3. O "Despertador Inteligente"
         document.addEventListener("visibilitychange", function() {
-            if (document.visibilityState === "visible") {
-                console.log("App voltou para a frente. Verificando conexão...");
-                
-                // Oculta o iframe (mostra o logo pulsando) e recarrega
-                iframe.style.opacity = '0';
-                
-                // Pequeno truque para forçar o reload do iframe
-                // Adiciona um número aleatório no final para o navegador não usar cache velho
-                const originalSrc = iframe.src.split('?')[0]; 
-                // Nota: Se seu link original já tinha "?", precisamos tratar diferente. 
-                // Mas para AppScript padrão (que termina em /exec), isso funciona bem:
-                iframe.src = iframe.src; 
+            
+            // Se o usuário MINIMIZOU ou TROCOU DE ABA
+            if (document.visibilityState === "hidden") {
+                horaQueSaiu = Date.now(); // Marca a hora exata que saiu
+            } 
+            
+            // Se o usuário VOLTOU
+            else if (document.visibilityState === "visible") {
+                const horaQueVoltou = Date.now();
+                const segundosFora = (horaQueVoltou - horaQueSaiu) / 1000;
+
+                // CONFIGURAÇÃO: Tempo limite em segundos (ex: 600 = 10 minutos)
+                // Se ficou fora por MENOS de 10 minutos, não faz nada (mantém onde estava).
+                // Se ficou fora por MAIS de 10 minutos, recarrega.
+                if (segundosFora > 600) {
+                    console.log("Ficou muito tempo fora. Recarregando...");
+                    
+                    // Mostra a tela de loading de novo
+                    loadingScreen.style.display = 'flex';
+                    // Pequeno delay para permitir o display:flex aplicar antes da opacidade
+                    setTimeout(() => { loadingScreen.style.opacity = '1'; }, 10);
+                    
+                    iframe.style.opacity = '0';
+                    iframe.src = iframe.src; // Força o recarregamento
+                } else {
+                    console.log("Voltou rápido. Mantendo a sessão.");
+                }
             }
         });
     </script>
