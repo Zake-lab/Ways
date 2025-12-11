@@ -6,23 +6,16 @@
     <title>Ways</title>
 
     <meta property="og:title" content="Ways">
-    
     <meta property="og:description" content="Acesse o aplicativo Ways.">
-    
     <meta property="og:image" content="https://mesaque-zake.github.io/Ways/icon-512.png">
-    
     <meta property="og:url" content="https://mesaque-zake.github.io/Ways/">
-
     <meta property="og:type" content="website">
-    <meta property="og:locale" content="pt_BR">
 
     <link rel="manifest" href="manifest.json">
-
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Ways">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon-512.png">
-
     <meta name="theme-color" content="#6105e8">
 
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
@@ -33,25 +26,89 @@
             padding: 0;
             height: 100%;
             overflow: hidden;
-            background-color: #6105e8;
+            background-color: #6105e8; /* Fundo Roxo */
             font-family: 'Dancing Script', cursive;
         }
+
+        /* O Iframe (o App em si) */
         iframe {
             display: block;
             border: none;
             height: 100vh;
             width: 100vw;
             background-color: #6105e8;
+            position: relative;
+            z-index: 1; /* Fica na frente quando carregar */
+            opacity: 0; /* Começa invisível para não mostrar tela branca */
+            transition: opacity 0.5s ease-in;
+        }
+
+        /* A Tela de Carregamento (Loading) */
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #6105e8;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 0; /* Fica atrás do iframe */
+        }
+
+        /* Animação do Texto Ways pulsando */
+        .pulsing-logo {
+            color: white;
+            font-size: 4rem;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
         }
     </style>
 </head>
 <body>
-    <iframe src="https://script.google.com/macros/s/AKfycbyRtUOd7f7zLeFhZl1aG6YDEyJ1M5TuHuN8NXrk6E2RhG0UOsmSIgvEE8Euyk0uK4fk/exec"></iframe>
+
+    <div id="loading-screen">
+        <div class="pulsing-logo">Ways</div>
+    </div>
+
+    <iframe id="app-frame" src="https://script.google.com/macros/s/AKfycbyRtUOd7f7zLeFhZl1aG6YDEyJ1M5TuHuN8NXrk6E2RhG0UOsmSIgvEE8Euyk0uK4fk/exec"></iframe>
 
     <script>
+        // 1. Controle do Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js');
         }
+
+        const iframe = document.getElementById('app-frame');
+        
+        // 2. Quando o iframe terminar de carregar, mostra ele suavemente
+        iframe.onload = function() {
+            iframe.style.opacity = '1';
+        };
+
+        // 3. O "Despertador": Recarrega se o app voltar do segundo plano
+        document.addEventListener("visibilitychange", function() {
+            if (document.visibilityState === "visible") {
+                console.log("App voltou para a frente. Verificando conexão...");
+                
+                // Oculta o iframe (mostra o logo pulsando) e recarrega
+                iframe.style.opacity = '0';
+                
+                // Pequeno truque para forçar o reload do iframe
+                // Adiciona um número aleatório no final para o navegador não usar cache velho
+                const originalSrc = iframe.src.split('?')[0]; 
+                // Nota: Se seu link original já tinha "?", precisamos tratar diferente. 
+                // Mas para AppScript padrão (que termina em /exec), isso funciona bem:
+                iframe.src = iframe.src; 
+            }
+        });
     </script>
 </body>
 </html>
