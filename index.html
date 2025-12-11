@@ -12,22 +12,28 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon-512.png">
 
-    <meta name="theme-color" content="#7B38F6">
+    <meta name="theme-color" content="#6105e8">
+
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
 
     <style>
-        /* Define a cor de fundo da página igual à do ícone */
+        /* Define a cor de fundo e a fonte padrão */
         body, html {
             margin: 0;
             padding: 0;
             height: 100%;
             overflow: hidden;
-            background-color: #7B38F6; /* Cor roxa do ícone */
+            background-color: #6105e8; /* Sua nova cor roxa */
+            font-family: 'Dancing Script', cursive;
         }
+        
+        /* O Iframe ocupa toda a tela */
         iframe {
             display: block;
             border: none;
             height: 100vh;
             width: 100vw;
+            background-color: #6105e8; /* Garante que o fundo do iframe também seja roxo antes de carregar */
         }
     </style>
 </head>
