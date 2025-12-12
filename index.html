@@ -7,12 +7,12 @@
 
     <link rel="icon" type="image/png" href="Favicon.png">
 
-    <meta property="og:image" content="https://mesaque-zake.github.io/Ways/Banner.png">
+    <meta property="og:image" content="https://mesaque-zake.github.io/Ways/BannerMesa.png">
     <meta property="og:url" content="https://mesaque-zake.github.io/Ways/">
     
     <meta property="og:title" content="Ways - Otimizador de Rotas">
     <meta property="og:description" content="O trajeto mais rápido na palma da sua mão. Vamos sair do papel e mudar nossos caminhos: Acesse o Ways!">
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="WebApp">
 
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,82 +27,56 @@
     <style>
         /* Base */
         body, html {
-            margin: 0; padding: 0; height: 100%; overflow: hidden;
+            margin: 0; padding: 0; height: 100%;
             background-color: #6105e8; /* Fundo Roxo */
             font-family: 'Dancing Script', cursive;
-            -webkit-tap-highlight-color: transparent; /* Remove clique azul no mobile */
+            -webkit-tap-highlight-color: transparent;
+            /* Permitir scroll no body é necessário para o pull-to-refresh funcionar */
+            overflow-y: auto; 
+            /* Mas esconde a barra de rolagem para ficar bonito */
+            scrollbar-width: none; -ms-overflow-style: none;
         }
+        body::-webkit-scrollbar { display: none; }
 
         /* --- TELA DE LOADING E OFFLINE --- */
         #loading-screen, #offline-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #6105e8;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            display: flex; flex-direction: column; 
+            /* Mudança aqui para posicionar o logo no final */
+            justify-content: space-between; 
+            align-items: center;
             z-index: 9999; transition: opacity 0.5s ease-out;
+            padding-bottom: 30px; /* Espaço para o logo não colar na borda */
+            box-sizing: border-box;
         }
 
-        /* Tela Offline começa escondida */
-        #offline-screen {
-            display: none; z-index: 10000; /* Fica acima de tudo mesmo */
+        /* Área central do carregamento */
+        .loading-content {
+            flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;
         }
 
-        /* Container da Barra */
-        .loading-progress-container {
-            width: 80%; max-width: 300px;
-            position: relative; overflow: visible; margin-top: 20px;
+        /* Seu Novo Logo no Rodapé */
+        .footer-logo {
+            width: 120px; /* Ajuste o tamanho conforme necessário */
+            height: auto;
+            opacity: 0.8; /* Um pouco transparente para ficar elegante */
         }
 
-        /* Caminhão */
-        .truck-wrapper {
-            position: absolute; top: -42px; left: 0; z-index: 2;
-            animation: driveTruck 3.5s linear forwards; 
-        }
-        .truck-icon {
-            height: 40px; width: 65px; overflow: visible;
-            fill: white; display: block;
-            animation: bounce 0.5s infinite alternate ease-in-out;
-        }
+        /* Tela Offline */
+        #offline-screen { display: none; z-index: 10000; justify-content: center; }
 
-        /* Barra e Texto */
-        .progress-track {
-            width: 100%; height: 6px;
-            background-color: rgba(255, 255, 255, 0.3);
-            border-radius: 10px; overflow: hidden; position: relative; z-index: 1;
-        }
-        .progress-fill {
-            height: 100%; width: 0%; background-color: white; border-radius: 10px;
-            animation: fillBar 3.5s linear forwards;
-        }
-        #progress-text {
-            color: white; font-size: 1.5rem; margin-top: 15px; text-align: center; width: 100%;
-            font-family: 'Poppins', sans-serif; font-weight: 700;
-        }
+        /* Barra e Caminhão (Mantido igual) */
+        .loading-progress-container { width: 80%; max-width: 300px; position: relative; overflow: visible; margin-top: 20px; }
+        .truck-wrapper { position: absolute; top: -42px; left: 0; z-index: 2; animation: driveTruck 3.5s linear forwards; }
+        .truck-icon { height: 40px; width: 65px; overflow: visible; fill: white; display: block; animation: bounce 0.5s infinite alternate ease-in-out; }
+        .progress-track { width: 100%; height: 6px; background-color: rgba(255, 255, 255, 0.3); border-radius: 10px; overflow: hidden; position: relative; z-index: 1; }
+        .progress-fill { height: 100%; width: 0%; background-color: white; border-radius: 10px; animation: fillBar 3.5s linear forwards; }
+        #progress-text { color: white; font-size: 1.5rem; margin-top: 15px; text-align: center; width: 100%; font-family: 'Poppins', sans-serif; font-weight: 700; }
+        .offline-message { color: white; font-family: 'Poppins', sans-serif; font-size: 1.2rem; text-align: center; margin-top: 20px; padding: 0 20px; }
 
-        /* Mensagem Offline */
-        .offline-message {
-            color: white; font-family: 'Poppins', sans-serif; font-size: 1.2rem;
-            text-align: center; margin-top: 20px; padding: 0 20px;
-        }
-
-        /* --- BOTÃO DE INSTALAR (Flutuante) --- */
-        #install-btn {
-            display: none; /* Começa escondido, o JS mostra se puder */
-            position: fixed;
-            bottom: 25px; right: 25px;
-            background-color: white;
-            color: #6105e8;
-            border: none;
-            border-radius: 50px;
-            padding: 12px 20px;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 700;
-            font-size: 0.9rem;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            cursor: pointer;
-            z-index: 5000;
-            align-items: center; gap: 8px;
-            animation: slideUp 1s ease-out;
-        }
+        /* Botão de Instalar (Mantido igual) */
+        #install-btn { display: none; position: fixed; bottom: 25px; right: 25px; background-color: white; color: #6105e8; border: none; border-radius: 50px; padding: 12px 20px; font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 0.9rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 5000; align-items: center; gap: 8px; animation: slideUp 1s ease-out; }
         #install-btn:active { transform: scale(0.95); }
 
         /* Animações */
@@ -111,24 +85,33 @@
         @keyframes fillBar { 0% { width: 0%; } 90% { width: 95%; } 100% { width: 95%; } }
         @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* O App (Iframe) */
+        /* O App (Iframe) - Ajustado para permitir o pull-to-refresh */
         iframe {
-            display: block; border: none; height: 100vh; width: 100vw;
-            background-color: #6105e8; opacity: 0; position: absolute; z-index: 1;
+            display: block; border: none; width: 100vw;
+            /* Altura ajustada para não bloquear o scroll do body */
+            height: calc(100vh - 1px); 
+            background-color: #6105e8; opacity: 0; position: relative; z-index: 1;
             transition: opacity 0.8s ease-in;
         }
+        
+        /* Estilo do ícone de puxar (ptr) */
+        .ptr--icon { color: white !important; }
     </style>
 </head>
 <body>
 
     <div id="loading-screen">
-        <div class="loading-progress-container">
-            <div class="truck-wrapper">
-                <svg class="truck-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M48 0C21.5 0 0 21.5 0 48V368c0 26.5 21.5 48 48 48H64c0 53 43 96 96 96s96-43 96-96H384c0 53 43 96 96 96s96-43 96-96h32c17.7 0 32-14.3 32-32s-14.3-32-32-32V288 256 237.3c0-17-6.7-33.3-18.7-45.3L512 114.7c-12-12-28.3-18.7-45.3-18.7H416V48c0-26.5-21.5-48-48-48H48zM416 160h50.7L544 237.3V256H416V160zM112 416a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm368-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96z"/></svg>
+        <div class="loading-content">
+            <div class="loading-progress-container">
+                <div class="truck-wrapper">
+                    <svg class="truck-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M48 0C21.5 0 0 21.5 0 48V368c0 26.5 21.5 48 48 48H64c0 53 43 96 96 96s96-43 96-96H384c0 53 43 96 96 96s96-43 96-96h32c17.7 0 32-14.3 32-32s-14.3-32-32-32V288 256 237.3c0-17-6.7-33.3-18.7-45.3L512 114.7c-12-12-28.3-18.7-45.3-18.7H416V48c0-26.5-21.5-48-48-48H48zM416 160h50.7L544 237.3V256H416V160zM112 416a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm368-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96z"/></svg>
+                </div>
+                <div class="progress-track"><div class="progress-fill"></div></div>
+                <div id="progress-text">0%</div>
             </div>
-            <div class="progress-track"><div class="progress-fill"></div></div>
-            <div id="progress-text">0%</div>
         </div>
+        
+        <img src="MesaLogo.png" alt="Logo" class="footer-logo">
     </div>
 
     <div id="offline-screen">
@@ -144,7 +127,9 @@
         Instalar App
     </button>
 
-    <iframe id="app-frame" src="https://script.google.com/macros/s/AKfycbz9-TRx-SI_Z1m5bt3uZvpsNGZ3ithe8hsnu6SCcmqwUo9vBH5lQMD3Ih3Fqbp9ud3o/exec"></iframe>
+    <div id="app-wrapper">
+        <iframe id="app-frame" src="https://script.google.com/macros/s/AKfycbz9-TRx-SI_Z1m5bt3uZvpsNGZ3ithe8hsnu6SCcmqwUo9vBH5lQMD3Ih3Fqbp9ud3o/exec"></iframe>
+    </div>
 
     <script>
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js'); }
@@ -157,143 +142,108 @@
         
         let horaQueSaiu = Date.now();
         let appCarregou = false;
-        let deferredPrompt; // Guarda o evento de instalação
+        let deferredPrompt;
 
-        // --- LÓGICA DE INSTALAÇÃO (PWA) ---
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Previne o Chrome de mostrar a barra padrão automaticamente
-            e.preventDefault();
-            deferredPrompt = e;
-            // Mostra nosso botão personalizado
-            installBtn.style.display = 'flex';
+        // --- CONFIGURAÇÃO DO PULL-TO-REFRESH (NOVO) ---
+        PullToRefresh.init({
+            mainElement: '#app-wrapper', // Onde o usuário puxa
+            triggerElement: '#app-wrapper',
+            onRefresh: function() {
+                // O que acontece quando puxa: Recarrega forçado
+                console.log("Puxou para recarregar!");
+                forcartRecarregamento();
+            },
+            distThreshold: 70, // Distância para puxar
+            iconArrow: '<svg width="24" height="24" fill="white" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>',
+            iconRefreshing: '<svg width="24" height="24" fill="white" viewBox="0 0 16 16" style="animation: spin 1s linear infinite;"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>',
+            instructionsPullToRefresh: "Puxe para recarregar",
+            instructionsReleaseToRefresh: "Solte para recarregar",
+            instructionsRefreshing: "Recarregando..."
         });
+        // Adiciona animação de spin no CSS para o ícone
+        const style = document.createElement('style');
+        style.innerHTML = '@keyframes spin { 100% { transform: rotate(360deg); } }';
+        document.head.appendChild(style);
 
+        // Função centralizada para forçar o recarregamento
+        function forcartRecarregamento() {
+            if (navigator.onLine) {
+                appCarregou = false;
+                loadingScreen.style.display = 'flex';
+                setTimeout(() => { loadingScreen.style.opacity = '1'; }, 10);
+                iframe.style.opacity = '0';
+                startPercentage();
+                
+                // Reseta animação da barra
+                const container = document.querySelector('.loading-progress-container');
+                const novoContainer = container.cloneNode(true);
+                container.parentNode.replaceChild(novoContainer, container);
+                
+                // Reload com timestamp
+                let urlLimpa = iframe.src.split('?')[0];
+                iframe.src = urlLimpa + '?t=' + new Date().getTime();
+                
+                setTimeout(() => { esconderLoading(); }, 2500);
+            }
+        }
+
+        // --- LÓGICA DE INSTALAÇÃO ---
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); deferredPrompt = e; installBtn.style.display = 'flex';
+        });
         installBtn.addEventListener('click', async () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    installBtn.style.display = 'none';
-                }
+                if (outcome === 'accepted') installBtn.style.display = 'none';
                 deferredPrompt = null;
             }
         });
 
-        // --- LÓGICA DE ONLINE / OFFLINE ---
+        // --- LÓGICA ONLINE/OFFLINE ---
         function atualizarStatusRede() {
             if (navigator.onLine) {
                 offlineScreen.style.display = 'none';
-                if (appCarregou) {
-                    iframe.style.opacity = '1';
-                    
-                    // O TRUQUE NOVO: Adiciona um timestamp para forçar reload real
-                    // Remove parâmetros antigos para não acumular lixo na URL
-                    let urlLimpa = iframe.src.split('?')[0]; 
-                    // Recarrega forçado
-                    iframe.src = urlLimpa + '?t=' + new Date().getTime();
-                }
+                if (appCarregou) forcartRecarregamento();
             } else {
                 offlineScreen.style.display = 'flex';
                 iframe.style.opacity = '0';
             }
         }
+        window.addEventListener('online', atualizarStatusRede);
+        window.addEventListener('offline', atualizarStatusRede);
 
-        window.addEventListener('online', () => {
-            // Mostra a tela de loading enquanto reconecta para não ficar piscando
-            if (appCarregou) {
-                loadingScreen.style.display = 'flex';
-                loadingScreen.style.opacity = '1';
-                
-                // Reinicia a animação da barra
-                startPercentage();
-                
-                atualizarStatusRede();
-                
-                // Aguarda um pouco antes de mostrar o app de novo
-                setTimeout(() => { esconderLoading(); }, 2500);
-            } else {
-                atualizarStatusRede();
-            }
-        });
-
-        window.addEventListener('offline', () => {
-            atualizarStatusRede();
-        });
-
-        window.addEventListener('online', () => {
-            atualizarStatusRede();
-            // Se a internet voltou, recarrega o app para garantir
-            iframe.src = iframe.src;
-        });
-        window.addEventListener('offline', () => {
-            atualizarStatusRede();
-        });
-
-        // --- LÓGICA DE CARREGAMENTO (Igual anterior) ---
-        let percentCounter = 0;
-        let percentInterval;
-
+        // --- LOADING ---
+        let percentCounter = 0; let percentInterval;
         function startPercentage() {
-            percentCounter = 0;
-            progressText.innerText = "0%";
-            clearInterval(percentInterval);
+            percentCounter = 0; progressText.innerText = "0%"; clearInterval(percentInterval);
             percentInterval = setInterval(() => {
-                if (percentCounter < 99) {
-                    percentCounter++;
-                    progressText.innerText = percentCounter + "%";
-                } else {
-                    clearInterval(percentInterval);
-                }
+                if (percentCounter < 99) { percentCounter++; progressText.innerText = percentCounter + "%"; } 
+                else { clearInterval(percentInterval); }
             }, 35);
         }
-
         function esconderLoading() {
             if (appCarregou) {
-                loadingScreen.style.opacity = '0';
-                iframe.style.opacity = '1';
+                loadingScreen.style.opacity = '0'; iframe.style.opacity = '1';
                 setTimeout(() => { loadingScreen.style.display = 'none'; }, 500);
             }
         }
-
         startPercentage();
-
-        iframe.onload = function() { 
-            appCarregou = true;
-            // Se estiver online, mostra. Se não, espera.
-            if(navigator.onLine) esconderLoading();
-        };
-
+        iframe.onload = function() { appCarregou = true; };
         setTimeout(() => {
-            if(appCarregou && navigator.onLine) {
-                esconderLoading();
-            } else {
-                let checarCarregamento = setInterval(() => {
-                    if(appCarregou && navigator.onLine) {
-                        esconderLoading();
-                        clearInterval(checarCarregamento);
-                    }
+            if(appCarregou && navigator.onLine) { esconderLoading(); } 
+            else {
+                let checar = setInterval(() => {
+                    if(appCarregou && navigator.onLine) { esconderLoading(); clearInterval(checar); }
                 }, 500);
             }
         }, 2500);
 
-        // --- CRONÔMETRO DE INATIVIDADE ---
+        // --- CRONÔMETRO ---
         document.addEventListener("visibilitychange", function() {
-            if (document.visibilityState === "hidden") {
-                horaQueSaiu = Date.now();
-            } else if (document.visibilityState === "visible") {
-                const segundosFora = (Date.now() - horaQueSaiu) / 1000;
-                if (segundosFora > 600) { 
-                    appCarregou = false;
-                    loadingScreen.style.display = 'flex';
-                    setTimeout(() => { loadingScreen.style.opacity = '1'; }, 10);
-                    startPercentage(); 
-                    const container = document.querySelector('.loading-progress-container');
-                    const novoContainer = container.cloneNode(true);
-                    container.parentNode.replaceChild(novoContainer, container);
-                    iframe.style.opacity = '0';
-                    iframe.src = iframe.src;
-                    setTimeout(() => { esconderLoading(); }, 2500);
-                }
+            if (document.visibilityState === "hidden") { horaQueSaiu = Date.now(); } 
+            else if (document.visibilityState === "visible") {
+                if ((Date.now() - horaQueSaiu) / 1000 > 600) forcartRecarregamento();
             }
         });
     </script>
